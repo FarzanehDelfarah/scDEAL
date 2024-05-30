@@ -58,7 +58,7 @@ def run_main(args):
     dim_au_out = args.bottleneck #8, 16, 32, 64, 128, 256,512
     select_drug = args.drug.upper()
     na = args.missing_value
-    data_path = "/desktop/Python/TRAC-DL/profiles/rnaseq_data.csv"
+    data_path = "/desktop/Python/TRAC-DL/profiles/rnaseq_data_radiated.csv"
     label_path = "/desktop/Python/TRAC-DL/profiles/label_binary_AUCPublished.csv"
     test_size = args.test_size
     valid_size = args.valid_size
