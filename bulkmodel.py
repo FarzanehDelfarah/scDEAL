@@ -58,8 +58,8 @@ def run_main(args):
     dim_au_out = args.bottleneck #8, 16, 32, 64, 128, 256,512
     select_drug = args.drug.upper()
     na = args.missing_value
-    data_path = "/desktop/Python/TRAC-DL/profiles/rnaseq_data_radiated.csv"
-    label_path = "/desktop/Python/TRAC-DL/profiles/label_binary_AUCPublished.csv"
+    data_path = args.data
+    label_path = args.label
     test_size = args.test_size
     valid_size = args.valid_size
     g_disperson = args.var_genes_disp
@@ -363,8 +363,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     # data 
-    parser.add_argument('--data', type=str, default='data/ALL_expression.csv',help='Path of the bulk RNA-Seq expression profile')
-    parser.add_argument('--label', type=str, default='data/ALL_label_binary_wf.csv',help='Path of the processed bulk RNA-Seq drug screening annotation')
+    parser.add_argument('--data', type=str, default='data/rnaseq_data.csv',help='Path of the bulk RNA-Seq expression profile')
+    parser.add_argument('--label', type=str, default='data/sens_res_AUCPublished_Cleveland_4030308.csv',help='Path of the processed bulk RNA-Seq drug screening annotation')
     parser.add_argument('--result', type=str, default='save/results/result_',help='Path of the training result report files')
     parser.add_argument('--drug', type=str, default='I-BET-762',help='Name of the selected drug, should be a column name in the input file of --label')
     parser.add_argument('--missing_value', type=int, default=1,help='The value filled in the missing entry in the drug screening annotation, default: 1')
