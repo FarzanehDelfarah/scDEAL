@@ -363,8 +363,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     # data 
-    parser.add_argument('--data', type=str, default='data/rnaseq_data.csv',help='Path of the bulk RNA-Seq expression profile')
-    parser.add_argument('--label', type=str, default='data/label_binary_Cleveland.csv',help='Path of the processed bulk RNA-Seq drug screening annotation')
+    parser.add_argument('--data', type=str, default='data/transposed_rnaseq_data.csv',help='Path of the bulk RNA-Seq expression profile')
+    parser.add_argument('--label', type=str, default='data/label_binary_Cleveland.csv',help='Path of the processed bulk RNA-Seq radiosensitivity annotation')
     parser.add_argument('--result', type=str, default='save/results/result_',help='Path of the training result report files')
     parser.add_argument('--radiation_dose', type=str, default='SF2',help='Name of the selected radiation dose, should be a column name in the input file of --label')
     parser.add_argument('--missing_value', type=int, default=1,help='The value filled in the missing entry in the drug screening annotation, default: 1')
