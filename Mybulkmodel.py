@@ -20,7 +20,7 @@ from sklearn.decomposition import PCA
 import sampling as sam
 import utils as ut
 import trainers as t
-from models import AEBase, PretrainedPredictor, PretrainedVAEPredictor, VAEBase
+from modified_model import AEBase, PretrainedPredictor, PretrainedVAEPredictor, VAEBase
 import matplotlib
 import random
 
