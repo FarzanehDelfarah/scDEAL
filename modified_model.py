@@ -8,7 +8,7 @@ import logging
 #import scipy.io as sio
 from copy import deepcopy
         
-        
+     
 class AEBase(nn.Module):
     def __init__(self,
                  input_dim,
