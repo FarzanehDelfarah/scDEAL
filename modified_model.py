@@ -3,11 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch import Tensor
 import numpy as np
-from copy import deepcopy
-from models import (AEBase,
-                   PretrainedPredictor,
-                   PretrainedVAEPredictor,
-                   VAEBase)
+import logging
 
 #import scipy.io as sio
 from copy import deepcopy
@@ -19,7 +15,6 @@ class AEBase(nn.Module):
                  latent_dim=128,
                  h_dims=[512],
                  drop_out=0.3):
-                 
         super(AEBase, self).__init__()
 
         self.latent_dim = latent_dim
@@ -27,7 +22,7 @@ class AEBase(nn.Module):
         modules = []
         hidden_dims = deepcopy(h_dims)
         
-        hidden_dims.insert(0, input_dim)
+        hidden_dims.insert(0,input_dim)
 
         # Build Encoder
         for i in range(1,len(hidden_dims)):
@@ -38,8 +33,10 @@ class AEBase(nn.Module):
                 nn.Sequential(
                     nn.Linear(i_dim, o_dim),
                     nn.BatchNorm1d(o_dim),
+                    #nn.ReLU(),
                     nn.Dropout(drop_out))
             )
+            #in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
         self.bottleneck = nn.Linear(hidden_dims[-1], latent_dim)
@@ -54,26 +51,54 @@ class AEBase(nn.Module):
         for i in range(len(hidden_dims) - 2):
             modules.append(
                 nn.Sequential(
-                    nn.Linear(hidden_dims[i], hidden_dims[i + 1]),
+                    nn.Linear(hidden_dims[i],
+                                       hidden_dims[i + 1]),
                     nn.BatchNorm1d(hidden_dims[i + 1]),
+                    #nn.ReLU(),
                     nn.Dropout(drop_out))
             )
+
 
         self.decoder = nn.Sequential(*modules)
 
         self.final_layer = nn.Sequential(
-            nn.Linear(hidden_dims[-2], input_dim),
-            nn.Sigmoid()
-        )
+                            nn.Linear(hidden_dims[-2],
+                                       hidden_dims[-1])
+                                       ,nn.Sigmoid()
+                            )
+        # self.feature_extractor =nn.Sequential(
+        #     self.encoder,
+        #     self.bottleneck
+        # )            
 
-    def forward(self, input: Tensor, **kwargs):
+             
+    def encode(self, input: Tensor):
+        """
+        Encodes the input by passing through the encoder network
+        and returns the latent codes.
+        """
         result = self.encoder(input)
         embedding = self.bottleneck(result)
-        result = self.decoder_input(embedding)
+
+        return embedding
+
+    def decode(self, z: Tensor):
+        """
+        Maps the given latent codes
+        """
+        result = self.decoder_input(z)
         result = self.decoder(result)
         result = self.final_layer(result)
         return result
 
+    def forward(self, input: Tensor, **kwargs):
+        embedding = self.encode(input)
+        output = self.decode(embedding)
+        return  output        
+
+
+
+# Model of Predictor
 class Predictor(nn.Module):
     def __init__(self,
                  input_dim,
@@ -84,11 +109,12 @@ class Predictor(nn.Module):
         super(Predictor, self).__init__()
 
         modules = []
+
         hidden_dims = deepcopy(h_dims)
         
-        hidden_dims.insert(0, input_dim)
+        hidden_dims.insert(0,input_dim)
 
-        # Build Predictor
+        # Build Encoder
         for i in range(1,len(hidden_dims)):
             i_dim = hidden_dims[i-1]
             o_dim = hidden_dims[i]
@@ -100,83 +126,76 @@ class Predictor(nn.Module):
                     nn.ReLU(),
                     nn.Dropout(drop_out))
             )
+            #in_channels = h_dim
 
         self.predictor = nn.Sequential(*modules)
+        #self.output = nn.Linear(hidden_dims[-1], output_dim)
+
         self.output = nn.Sequential(
-            nn.Linear(hidden_dims[-1], output_dim),
-            nn.Sigmoid()
-        )
+                            nn.Linear(hidden_dims[-1],
+                                       output_dim),
+                                       nn.Sigmoid()
+                            )            
+
 
     def forward(self, input: Tensor, **kwargs):
         embedding = self.predictor(input)
         output = self.output(embedding)
-        return output
+        return  output
         
         
         
     
 # Model of Pretrained P
-class PretrainedVAEPredictor(VAEBase):
+class PretrainedPredictor(AEBase):
     def __init__(self,
+                 # Params from AE model
                  input_dim,
                  latent_dim=128,
                  h_dims=[512],
                  drop_out=0.3,
+                 ### Parameters from predictor models
                  pretrained_weights=None,                 
                  hidden_dims_predictor=[256],
                  drop_out_predictor=0.3,
-                 output_dim=1,
-                 freezed=False,
-                 z_reparam=True):
+                 output_dim = 1,
+                 freezed = False):
         
-        self.z_reparam = z_reparam
         # Construct an autoencoder model
-        VAEBase.__init__(self, input_dim, latent_dim, h_dims, drop_out)
+        AEBase.__init__(self,input_dim,latent_dim,h_dims,drop_out)
         
         # Load pretrained weights
-        if pretrained_weights is not None:
-            self.load_state_dict(torch.load(pretrained_weights))
+        if pretrained_weights !=None:
+            self.load_state_dict((torch.load(pretrained_weights)))
         
         ## Free parameters until the bottleneck layer
-        if pretrained_weights is not None:
-            self.load_state_dict(torch.load(pretrained_weights))
-        
-        ## Freeze parameters until the bottleneck layer
-        if freezed:
-            bottleneck_reached = False
+        if freezed == True:
+            bottlenect_reached = False
             for p in self.parameters():
-                if bottleneck_reached and p.shape[0] > latent_dim:
+                if ((bottlenect_reached == True)&(p.shape.numel()>self.latent_dim)):
                     break
                 p.requires_grad = False
-                print("Layer weight is frozen:", p.shape)
                 # Stop until the bottleneck layer
-                if p.shape[0] == latent_dim:
-                    bottleneck_reached = True
-
+                if p.shape.numel() == self.latent_dim:
+                    bottlenect_reached = True
         # Only extract encoder
         del self.decoder
         del self.decoder_input
         del self.final_layer
 
-        self.predictor = Predictor(input_dim=latent_dim,  # Fixed the input dimension here
-                                    output_dim=output_dim,
-                                    h_dims=hidden_dims_predictor,
-                                    drop_out=drop_out_predictor)
+        self.predictor = Predictor(input_dim=self.latent_dim,
+                 output_dim=output_dim,
+                 h_dims=hidden_dims_predictor,
+                 drop_out=drop_out_predictor)
 
     def forward(self, input, **kwargs):
-        print(f"Input shape: {input.shape}")
-        embedding = self.encode(input, repram=self.z_reparam)
-        print(f"Embedding shape: {embedding.shape}")
+        embedding = self.encode(input)
         output = self.predictor(embedding)
-        print(f"Output shape: {output.shape}")
-        return output
-
+        return  output
+   
     def predict(self, embedding, **kwargs):
-        print(f"Embedding shape: {embedding.shape}")
         output = self.predictor(embedding)
-        print(f"Output shape: {output.shape}")
-        return output
-    
+        return  output 
      
 
 def vae_loss(recon_x, x, mu, logvar,reconstruction_function,weight=1):
@@ -563,7 +582,6 @@ class PretrainedVAEPredictor(VAEBase):
                 if ((bottlenect_reached == True)&(p.shape[0]>self.latent_dim)):
                     break
                 p.requires_grad = False
-                print("Layer weight is freezed:",format(p.shape))
                 # Stop until the bottleneck layer
                 if p.shape[0] == self.latent_dim:
                     bottlenect_reached = True
@@ -573,7 +591,7 @@ class PretrainedVAEPredictor(VAEBase):
         del self.decoder_input
         del self.final_layer
 
-        self.predictor = Predictor(input_dim=input_dim,  # Adjusted input dimension
+        self.predictor = Predictor(input_dim=self.latent_dim,
                  output_dim=output_dim,
                  h_dims=hidden_dims_predictor,
                  drop_out=drop_out_predictor)
@@ -584,18 +602,13 @@ class PretrainedVAEPredictor(VAEBase):
         # )
 
     def forward(self, input, **kwargs):
-        print(f"Input shape: {input.shape}")
-        embedding = self.encode(input, repram=self.z_reparam)
-        print(f"Embedding shape: {embedding.shape}")
+        embedding = self.encode(input,repram=self.z_reparam)
         output = self.predictor(embedding)
-        print(f"Output shape: {output.shape}")
-        return output
+        return  output
 
     def predict(self, embedding, **kwargs):
-        print(f"Embedding shape: {embedding.shape}")
         output = self.predictor(embedding)
-        print(f"Output shape: {output.shape}")
-        return output
+        return  output
 
 class DaNN(nn.Module):
     def __init__(self, source_model,target_model,fix_source=False):
@@ -604,7 +617,6 @@ class DaNN(nn.Module):
         if fix_source == True:
             for p in self.parameters():
                 p.requires_grad = False
-                print("Layer weight is freezed:",format(p.shape))
                 # Stop until the bottleneck layer
         self.target_model = target_model
     '''
