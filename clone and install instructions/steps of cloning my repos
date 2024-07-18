@@ -4,3 +4,7 @@
 (myenv) (base) delfarah@Sadafs-MacBook-Pro scDEAL % pip install numpy pandas torch scipy scikit-learn matplotlib scanpy captum imblearn python-igraph
 or
 (myenv) (base) delfarah@Sadafs-MacBook-Pro scDEAL % pip install --index-url=https://pypi.tuna.tsinghua.edu.cn/simple numpy pandas torch scipy scikit-learn matplotlib scanpy captum imblearn python-igraph
+
+
+
+# after cloning my repository and installing requirements, please first run Mybulkmodel.py, and then run Myscmodel.py.
