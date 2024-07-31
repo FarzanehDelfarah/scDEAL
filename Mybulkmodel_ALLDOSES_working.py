@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.decomposition import PCA
 
 import sampling as sam
-import My_utils as ut
+import Myutils as ut
 import trainers as t
 from sklearn.utils.class_weight import compute_class_weight
 from Mymodels import AEBase, PretrainedPredictor, PretrainedVAEPredictor, VAEBase
