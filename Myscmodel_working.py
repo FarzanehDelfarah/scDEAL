@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import DaNN.mmd as mmd
 import scanpypip.preprocessing as pp
 import trainers as t
-import My_utils as ut
+import Myutils as ut
 from captum.attr import IntegratedGradients
 from Mymodels import AEBase, DaNN, PretrainedPredictor, PretrainedVAEPredictor, VAEBase
 from scipy.spatial import distance_matrix, minkowski_distance, distance
