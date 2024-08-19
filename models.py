@@ -7,11 +7,11 @@ import numpy as np
 #import scipy.io as sio
 from copy import deepcopy
         
-        
+
 class AEBase(nn.Module):
     def __init__(self,
-                 input_dim,
-                 latent_dim=128,
+                 input_dim=16383,
+                 latent_dim=512,
                  h_dims=[512],
                  drop_out=0.3):
                  
@@ -22,10 +22,10 @@ class AEBase(nn.Module):
         modules = []
         hidden_dims = deepcopy(h_dims)
         
-        hidden_dims.insert(0,input_dim)
+        hidden_dims.insert(0, input_dim)
 
         # Build Encoder
-        for i in range(1,len(hidden_dims)):
+        for i in range(1, len(hidden_dims)):
             i_dim = hidden_dims[i-1]
             o_dim = hidden_dims[i]
 
@@ -33,10 +33,9 @@ class AEBase(nn.Module):
                 nn.Sequential(
                     nn.Linear(i_dim, o_dim),
                     nn.BatchNorm1d(o_dim),
-                    #nn.ReLU(),
-                    nn.Dropout(drop_out))
+                    nn.Dropout(drop_out)
+                )
             )
-            #in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
         self.bottleneck = nn.Linear(hidden_dims[-1], latent_dim)
@@ -48,53 +47,49 @@ class AEBase(nn.Module):
 
         hidden_dims.reverse()
 
-        for i in range(len(hidden_dims) - 2):
+        for i in range(len(hidden_dims) - 1):
             modules.append(
                 nn.Sequential(
-                    nn.Linear(hidden_dims[i],
-                                       hidden_dims[i + 1]),
+                    nn.Linear(hidden_dims[i], hidden_dims[i + 1]),
                     nn.BatchNorm1d(hidden_dims[i + 1]),
-                    #nn.ReLU(),
-                    nn.Dropout(drop_out))
+                    nn.Dropout(drop_out)
+                )
             )
-
 
         self.decoder = nn.Sequential(*modules)
 
         self.final_layer = nn.Sequential(
-                            nn.Linear(hidden_dims[-2],
-                                       hidden_dims[-1])
-                                       ,nn.Sigmoid()
-                            )
-        # self.feature_extractor =nn.Sequential(
-        #     self.encoder,
-        #     self.bottleneck
-        # )            
+            nn.Linear(hidden_dims[-1], input_dim),
+            nn.Sigmoid()
+        )
 
-             
     def encode(self, input: Tensor):
         """
         Encodes the input by passing through the encoder network
         and returns the latent codes.
         """
+        print(f"Input shape before encoding: {input.shape}")
         result = self.encoder(input)
         embedding = self.bottleneck(result)
-
+        print(f"Shape after encoding (latent space): {embedding.shape}")
         return embedding
 
     def decode(self, z: Tensor):
         """
-        Maps the given latent codes
+        Maps the given latent codes back to the input space.
         """
+        print(f"Shape before decoding: {z.shape}")
         result = self.decoder_input(z)
         result = self.decoder(result)
-        result = self.final_layer(result)
-        return result
+        output = self.final_layer(result)
+        print(f"Output shape after decoding: {output.shape}")
+        return output
 
     def forward(self, input: Tensor, **kwargs):
         embedding = self.encode(input)
         output = self.decode(embedding)
-        return  output        
+        print(f"Final output shape: {output.shape}")
+        return output        
 
 # Model of Predictor
 class Predictor(nn.Module):
@@ -148,7 +143,7 @@ class PretrainedPredictor(AEBase):
     def __init__(self,
                  # Params from AE model
                  input_dim,
-                 latent_dim=128,
+                 latent_dim=512,
                  h_dims=[512],
                  drop_out=0.3,
                  ### Parameters from predictor models
@@ -213,7 +208,7 @@ def vae_loss(recon_x, x, mu, logvar,reconstruction_function,weight=1):
 class VAEBase(nn.Module):
     def __init__(self,
                  input_dim,
-                 latent_dim=128,
+                 latent_dim=512,
                  h_dims=[512],
                  drop_out=0.3):
                  
@@ -410,7 +405,7 @@ class CVAEBase(VAEBase):
     def __init__(self,
                  input_dim,
                  n_conditions,
-                 latent_dim=128,
+                 latent_dim=512,
                  h_dims=[512],
                  drop_out=0.3):
 
@@ -554,7 +549,7 @@ class PretrainedVAEPredictor(VAEBase):
     def __init__(self,
                  # Params from AE model
                  input_dim,
-                 latent_dim=128,
+                 latent_dim=512,
                  h_dims=[512],
                  drop_out=0.3,
                  ### Parameters from predictor models
