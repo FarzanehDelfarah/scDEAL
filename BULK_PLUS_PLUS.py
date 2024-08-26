@@ -27,6 +27,8 @@ from models import AEBase, PretrainedPredictor, PretrainedVAEPredictor, VAEBase
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import matplotlib
 import random
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 # Set random seeds for reproducibility
 seed = 42
@@ -330,7 +332,7 @@ def run_main(args):
     model.to(device)
     # Train the predictor model
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    bulk_model = "save/bulk_pre/model_checkpoint.pth"
+    bulk_model = "save/bulk_pre/integrate_data_GSE165318doseALLDOSES_bottle_512_edim_512,256_pdim_16,8_model_AE_dropout_0.3_gene_F_lr_0.01_mod_new_sam_no"
     exp_lr_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer)
     loss_function = nn.CrossEntropyLoss()
 
