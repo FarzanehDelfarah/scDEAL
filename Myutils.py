@@ -98,7 +98,7 @@ def specific_process(adata, dataname='', **kargs):
 
 def process_165318(adata, **kargs):
     # Load metadata
-    meta_data_path = 'data/GSE165318/GSE165318_meta.data.single.cell.csv'  # Update with your actual path
+    meta_data_path = 'data/GSE165318_metadata_singlecell_modified_with_controls_new.csv'  # Update with your actual path
     meta_data = pd.read_csv(meta_data_path, index_col=0)
 
     # Merging the metadata
@@ -207,9 +207,9 @@ def plot_loss(report, path='figures/loss.pdf', set_ylim=False):
 import scanpy as sc
 
 # Provide the correct path to the normalized data file
-data_path = "data/GSE165318/GSE165318_normalized.single.cell.txt"
+data_path = "data/GSE165318_normalized.single.cell.transposed.txt"
 # Provide the correct path to the metadata file
-meta_data_path = "data/GSE165318/GSE165318_meta.data.single.cell.csv"
+meta_data_path = "data/GSE165318_metadata_singlecell_modified_with_controls_new.csv"
 
 # Load normalized data
 adata = sc.read_text(data_path).transpose()
@@ -230,9 +230,3 @@ sc.tl.pca(adata, svd_solver='arpack')
 sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
 sc.tl.umap(adata)
 sc.tl.leiden(adata)
-
-# Process your specific dataset (if any additional steps are required)
-adata = specific_process(adata, dataname="GSE165318")
-
-# Save the processed data
-adata.write("GSE165318_processed.h5ad")

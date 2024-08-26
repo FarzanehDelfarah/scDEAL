@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from Mymodels import vae_loss
+from models import vae_loss
 from sklearn.metrics.pairwise import cosine_similarity
 ### loss2
 import copy
